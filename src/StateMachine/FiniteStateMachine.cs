@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace StateMachine
 {
@@ -17,7 +13,7 @@ namespace StateMachine
     /// <typeparam name="TState">Type of State</typeparam>
     /// <typeparam name="TEvent">Type of Event Triggers</typeparam>
     [DebuggerDisplay("{State}")]
-    public class FiniteStateMachine<TState, TEvent>
+    public class FiniteStateMachine<TState, TEvent> : IStateful<TState, TEvent>
     {
         public TState[] States { get; }
         public TState State { get; private set; }
@@ -66,7 +62,7 @@ namespace StateMachine
         /// call to <see cref="TriggerEvent(TEvent)"/>
         /// </summary>
         /// <param name="trigger">The event to check</param>
-        public bool IsEventAccepted(TEvent trigger)
+        public (bool, TState) IsEventAccepted(TEvent trigger)
         {
 
             int s = Array.IndexOf(States, State);
@@ -76,7 +72,7 @@ namespace StateMachine
 
             var transition = TransitionTable[s, e];
             if (transition == null)
-                return false;
+                return (false, State);
 
             return transition.Validate();
         }
@@ -268,10 +264,10 @@ namespace StateMachine
                 }
             }
 
-            public virtual bool Validate()
+            public virtual (bool, TState) Validate()
             {
                 //Not much to do here, but this is overridden in the condition version with more complex logic to walk the chain of 'if' statements
-                return true;
+                return (true, ToState);
             }
 
             /// <summary>
@@ -327,12 +323,12 @@ namespace StateMachine
                 Condition = condition;
             }
 
-            public override bool Validate()
+            public override (bool, TState) Validate()
             {
                 //Evaluate the condition -- if satisifed, return true
                 if (Condition())
                 {
-                    return true;
+                    return (true, ToState);
                 }
                 //otherwise, walk out to the end of the linked list -- first condition to be satisifed returns true
                 else if (NextTransition != null)
@@ -342,7 +338,7 @@ namespace StateMachine
                 //we are at the end of the chain and no conditions were satisifed, return false
                 else
                 {
-                    return false;
+                    return (false, FromState);
                 }
             }
 
