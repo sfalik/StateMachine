@@ -520,7 +520,7 @@ namespace StateMachine.Tests
         {
             Execute.Assertion
                 .BecauseOf(because, becauseArgs)
-                .ForCondition(Subject.IsEventAccepted(eventToAccept))
+                .ForCondition(Subject.IsEventAccepted(eventToAccept).Item1)
                 .FailWith("Expected {context} to accept {0}{reason}, but it does not", eventToAccept);
 
             return new AndConstraint<StateMachineAssertions<TState, TEvent>>(this);
@@ -530,7 +530,7 @@ namespace StateMachine.Tests
         {
             Execute.Assertion
                 .BecauseOf(because, becauseArgs)
-                .ForCondition(!Subject.IsEventAccepted(eventToAccept))
+                .ForCondition(!Subject.IsEventAccepted(eventToAccept).Item1)
                 .FailWith("Expected {context} to not accept {0}{reason}, but it does", eventToAccept);
 
             return new AndConstraint<StateMachineAssertions<TState, TEvent>>(this);
