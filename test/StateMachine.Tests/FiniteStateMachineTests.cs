@@ -328,6 +328,20 @@ namespace StateMachine.Tests
         }
 
         /// <summary>
+        /// Test that when an error state is not explicitly passed, the default is the transition's from state
+        /// </summary>
+        [Fact]
+        public void NonNullableErrorState()
+        {
+            var transition = _stateMachine
+                .WhenStateIs(State.State2).AndEventIs(Event.Event2)
+                .TransitionTo(State.State3);
+
+            transition.ActionErrorState.Should().NotBe(null);
+            transition.ActionErrorState.Should().Be(State.State2);
+        }
+
+        /// <summary>
         /// Test that throwing an exception during the state transition drives to the 'error' state and propogates the exception
         /// </summary>
         [Fact]
@@ -363,6 +377,21 @@ namespace StateMachine.Tests
                 .Should().ThrowExactly<ExpectedException>();
 
             _stateMachine.Should().BeInState(State.InitialState);
+        }
+
+        /// <summary>
+        /// Test that when an error state is not explicitly passed, the default is the transition's from state
+        /// </summary>
+        [Fact]
+        public void NonNullableConditionalErrorState()
+        {
+            var transition = _stateMachine
+                .WhenStateIs(State.State2).AndEventIs(Event.Event2)
+                .If(() => true)
+                .TransitionTo(State.State3);
+
+            transition.ActionErrorState.Should().NotBe(null);
+            transition.ActionErrorState.Should().Be(State.State2);
         }
 
         /// <summary>
@@ -558,6 +587,8 @@ namespace StateMachine.Tests
     public static class StateMachineExtensions
     {
         public static StateMachineAssertions<TState, TEvent> Should<TState, TEvent>(this FiniteStateMachine<TState, TEvent> instance)
+            where TState : notnull
+            where TEvent : notnull
         {
             return new Tests.StateMachineAssertions<TState, TEvent>(instance);
         }
@@ -565,6 +596,8 @@ namespace StateMachine.Tests
 
     public class StateMachineAssertions<TState, TEvent>
         : ReferenceTypeAssertions<FiniteStateMachine<TState, TEvent>, StateMachineAssertions<TState, TEvent>>
+            where TState : notnull
+            where TEvent : notnull
     {
         public StateMachineAssertions(FiniteStateMachine<TState, TEvent> subject)
             :base(subject)
@@ -574,6 +607,9 @@ namespace StateMachine.Tests
 
         public AndConstraint<StateMachineAssertions<TState, TEvent>> AcceptEvent(TEvent eventToAccept, string because = "", params object[] becauseArgs)
         {
+            if(Subject == null)
+                throw new NullReferenceException("Subject should not be null");
+
             Execute.Assertion
                 .BecauseOf(because, becauseArgs)
                 .ForCondition(Subject.IsEventAccepted(eventToAccept, out _))
@@ -584,6 +620,9 @@ namespace StateMachine.Tests
 
         public AndConstraint<StateMachineAssertions<TState, TEvent>> NotAcceptEvent(TEvent eventToAccept, string because = "", params object[] becauseArgs)
         {
+            if (Subject == null)
+                throw new NullReferenceException("Subject should not be null");
+
             Execute.Assertion
                 .BecauseOf(because, becauseArgs)
                 .ForCondition(!Subject.IsEventAccepted(eventToAccept, out _))
@@ -594,6 +633,12 @@ namespace StateMachine.Tests
 
         public AndConstraint<StateMachineAssertions<TState, TEvent>> BeInState(TState state, string because = "", params object[] becauseArgs)
         {
+            if (Subject == null)
+                throw new NullReferenceException("Subject should not be null");
+
+            if(Subject.State == null)
+                throw new NullReferenceException("Subject.State should not be null");
+
             Execute.Assertion
                 .BecauseOf(because, becauseArgs)
                 .ForCondition(Subject.State.Equals(state))
@@ -604,6 +649,12 @@ namespace StateMachine.Tests
 
         public AndConstraint<StateMachineAssertions<TState, TEvent>> NotBeInState(TState state, string because = "", params object[] becauseArgs)
         {
+            if (Subject == null)
+                throw new NullReferenceException("Subject should not be null");
+
+            if (Subject.State == null)
+                throw new NullReferenceException("Subject.State should not be null");
+
             Execute.Assertion
                 .BecauseOf(because, becauseArgs)
                 .ForCondition(!Subject.State.Equals(state))

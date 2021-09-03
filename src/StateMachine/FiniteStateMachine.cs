@@ -14,6 +14,8 @@ namespace StateMachine
     /// <typeparam name="TEvent">Type of Event Triggers</typeparam>
     [DebuggerDisplay("{State}")]
     public class FiniteStateMachine<TState, TEvent> : IStateful<TState, TEvent>
+        where TState : notnull
+        where TEvent : notnull
     {
         public TState[] States { get; }
         public TState State { get; private set; }
@@ -225,7 +227,7 @@ namespace StateMachine
             public TState FromState { get; private set; }
             public TState ToState { get; private set; }
             public Action? Action { get; protected set; }
-            public TState? ActionErrorState { get; protected set; }
+            public TState ActionErrorState { get; protected set; }
             public FiniteStateMachine<TState, TEvent> StateMachine { get; private set; }
 
             protected Transition? _nextTransition;
@@ -245,6 +247,7 @@ namespace StateMachine
                     throw new ArgumentException($"State '{toState}' is not a valid state", nameof(toState));
 
                 FromState = fromState;
+                ActionErrorState = fromState; //Default is to keep the same state on transition errors
                 Trigger = trigger;
                 ToState = toState;
                 StateMachine = stateMachine;
@@ -288,7 +291,7 @@ namespace StateMachine
                     }
                     catch
                     {
-                        //if there is an exception, set the status accordingly and rethrow
+                        //if there is an exception, set the state accordingly and rethrow
                         StateMachine.State = ActionErrorState;
                         throw;
                     }
@@ -324,7 +327,6 @@ namespace StateMachine
             public void WithAction(Action action)
             {
                 Action = action;
-                ActionErrorState = FromState;
             }
         }
 
@@ -333,7 +335,7 @@ namespace StateMachine
         /// </summary>
         public class ConditionalTransition : Transition
         {
-            public Transition NextTransition => _nextTransition;
+            public Transition? NextTransition => _nextTransition;
             public Func<bool> Condition { get; private set; }
             public ConditionalTransition(TState state, TEvent trigger, Func<bool> condition, TState newState, FiniteStateMachine<TState, TEvent> stateMachine)
                 : base(state, trigger, newState, stateMachine)
@@ -410,7 +412,6 @@ namespace StateMachine
             public new ConditionalTransitionWithAction WithAction(Action action)
             {
                 Action = action;
-                ActionErrorState = FromState;
                 return new ConditionalTransitionWithAction(this);
             }
 

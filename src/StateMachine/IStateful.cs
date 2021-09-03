@@ -1,6 +1,8 @@
 ﻿namespace StateMachine
 {
     public interface IStateful<TState, TEvent>
+        where TState : notnull
+        where TEvent : notnull
     {
         public TState[] States { get; }
         public TState State { get; }
