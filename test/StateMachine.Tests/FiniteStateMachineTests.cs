@@ -1,4 +1,4 @@
-using FluentAssertions;
+﻿using FluentAssertions;
 using FluentAssertions.Execution;
 using FluentAssertions.Primitives;
 using System;
@@ -566,10 +566,9 @@ namespace StateMachine.Tests
     public class StateMachineAssertions<TState, TEvent>
         : ReferenceTypeAssertions<FiniteStateMachine<TState, TEvent>, StateMachineAssertions<TState, TEvent>>
     {
-        public StateMachineAssertions(FiniteStateMachine<TState, TEvent> instance)
-        {
-            Subject = instance;
-        }
+        public StateMachineAssertions(FiniteStateMachine<TState, TEvent> subject)
+            :base(subject)
+        { }
 
         protected override string Identifier => "State Machine";
 
