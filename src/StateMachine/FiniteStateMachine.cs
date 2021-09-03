@@ -224,11 +224,11 @@ namespace StateMachine
             public TEvent Trigger { get; private set; }
             public TState FromState { get; private set; }
             public TState ToState { get; private set; }
-            public Action Action { get; protected set; }
-            public TState ActionErrorState { get; protected set; }
+            public Action? Action { get; protected set; }
+            public TState? ActionErrorState { get; protected set; }
             public FiniteStateMachine<TState, TEvent> StateMachine { get; private set; }
 
-            protected Transition _nextTransition;
+            protected Transition? _nextTransition;
 
             public Transition(TState fromState, TEvent trigger, TState toState, FiniteStateMachine<TState, TEvent> stateMachine)
             {
