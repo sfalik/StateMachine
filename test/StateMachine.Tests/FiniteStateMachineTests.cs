@@ -310,7 +310,7 @@ namespace StateMachine.Tests
         }
 
         /// <summary>
-        /// Test that throwing an exception during the state transition drives to the 'error' state and propogates the exception
+        /// Test that throwing an exception during the state transition propogates the exception and keeps the initial state
         /// </summary>
         [Fact]
         public void TestActionWithError()
@@ -347,7 +347,7 @@ namespace StateMachine.Tests
 
 
         /// <summary>
-        /// Test that throwing an exception during the state transition drives to the 'error' state and propogates the exception
+        /// Test that throwing an exception during the state transition propogates the exception and keeps the initial state
         /// </summary>
         [Fact]
         public void TestConditionalActionWithError()
