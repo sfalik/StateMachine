@@ -62,7 +62,7 @@ namespace StateMachine
         /// call to <see cref="TriggerEvent(TEvent)"/>
         /// </summary>
         /// <param name="trigger">The event to check</param>
-        public (bool, TState) IsEventAccepted(TEvent trigger)
+        public bool IsEventAccepted(TEvent trigger, out TState newState)
         {
 
             int s = Array.IndexOf(States, State);
@@ -72,9 +72,12 @@ namespace StateMachine
 
             var transition = TransitionTable[s, e];
             if (transition == null)
-                return (false, State);
+            {
+                newState = State;
+                return false;
+            }
 
-            return transition.Validate();
+            return transition.Validate(out newState);
         }
 
         public TState TriggerEvent(TEvent trigger)
@@ -264,10 +267,11 @@ namespace StateMachine
                 }
             }
 
-            public virtual (bool, TState) Validate()
+            public virtual bool Validate(out TState newState)
             {
                 //Not much to do here, but this is overridden in the condition version with more complex logic to walk the chain of 'if' statements
-                return (true, ToState);
+                newState = ToState;
+                return true;
             }
 
             /// <summary>
@@ -308,6 +312,20 @@ namespace StateMachine
                 Action = action;
                 ActionErrorState = errorState;
             }
+
+            /// <summary>
+            /// Add an action to be performed along with the state transition.  
+            /// <para>It is important to consider what to do if the
+            /// Action encounters and exception.  Handle the exception within the action if possible, otherwise the exception
+            /// is propogated back to the caller that initates the state transition.</para>
+            /// </summary>
+            /// <param name="action">Action to be performed</param>
+            /// <param name="errorState">State to transition to in the event of an exception executing <paramref name="action"/></param>
+            public void WithAction(Action action)
+            {
+                Action = action;
+                ActionErrorState = FromState;
+            }
         }
 
         /// <summary>
@@ -323,22 +341,24 @@ namespace StateMachine
                 Condition = condition;
             }
 
-            public override (bool, TState) Validate()
+            public override bool Validate(out TState newState)
             {
                 //Evaluate the condition -- if satisifed, return true
                 if (Condition())
                 {
-                    return (true, ToState);
+                    newState = ToState;
+                    return true;
                 }
                 //otherwise, walk out to the end of the linked list -- first condition to be satisifed returns true
                 else if (NextTransition != null)
                 {
-                    return NextTransition.Validate();
+                    return NextTransition.Validate(out newState);
                 }
                 //we are at the end of the chain and no conditions were satisifed, return false
                 else
                 {
-                    return (false, FromState);
+                    newState = FromState;
+                    return false;
                 }
             }
 
@@ -376,6 +396,21 @@ namespace StateMachine
             {
                 Action = action;
                 ActionErrorState = errorState;
+                return new ConditionalTransitionWithAction(this);
+            }
+
+            /// <summary>
+            /// Add an action to be performed along with the state transition.  
+            /// <para>It is important to consider what to do if the
+            /// Action encounters and exception.  Handle the exception within the action if possible, otherwise the exception
+            /// is propogated back to the caller that initates the state transition.</para>
+            /// </summary>
+            /// <param name="action">Action to be performed</param>
+            /// <param name="errorState">State to transition to in the event of an exception executing <paramref name="action"/></param>
+            public new ConditionalTransitionWithAction WithAction(Action action)
+            {
+                Action = action;
+                ActionErrorState = FromState;
                 return new ConditionalTransitionWithAction(this);
             }
 

@@ -7,7 +7,7 @@
 
         public TEvent[] Events { get; }
 
-        public (bool, TState) IsEventAccepted(TEvent data);
+        public bool IsEventAccepted(TEvent data, out TState newState);
 
         public TState TriggerEvent(TEvent data);
     }

@@ -317,7 +317,64 @@ namespace StateMachine.Tests
         {
             _stateMachine.WhenStateIs(State.InitialState).AndEventIs(Event.Event1)
                 .TransitionTo(State.State1)
+                .WithAction(() => throw new ExpectedException());
+
+            _stateMachine.Should().AcceptEvent(Event.Event1);
+
+            _stateMachine.Invoking(sm => sm.TriggerEvent(Event.Event1))
+                .Should().ThrowExactly<ExpectedException>();
+
+            _stateMachine.Should().BeInState(State.InitialState);
+        }
+
+        /// <summary>
+        /// Test that throwing an exception during the state transition drives to the 'error' state and propogates the exception
+        /// </summary>
+        [Fact]
+        public void TestActionWithErrorAndExplicitErrorState()
+        {
+            _stateMachine.WhenStateIs(State.InitialState).AndEventIs(Event.Event1)
+                .TransitionTo(State.State1)
                 .WithAction(() => throw new ExpectedException(), State.Error);
+
+            _stateMachine.Should().AcceptEvent(Event.Event1);
+
+            _stateMachine.Invoking(sm => sm.TriggerEvent(Event.Event1))
+                .Should().ThrowExactly<ExpectedException>();
+
+            _stateMachine.Should().BeInState(State.Error);
+        }
+
+
+        /// <summary>
+        /// Test that throwing an exception during the state transition drives to the 'error' state and propogates the exception
+        /// </summary>
+        [Fact]
+        public void TestConditionalActionWithError()
+        {
+            _stateMachine.WhenStateIs(State.InitialState).AndEventIs(Event.Event1)
+                .If(() => true)
+                    .TransitionTo(State.State1)
+                    .WithAction(() => throw new ExpectedException());
+
+            _stateMachine.Should().AcceptEvent(Event.Event1);
+
+            _stateMachine.Invoking(sm => sm.TriggerEvent(Event.Event1))
+                .Should().ThrowExactly<ExpectedException>();
+
+            _stateMachine.Should().BeInState(State.InitialState);
+        }
+
+        /// <summary>
+        /// Test that throwing an exception during the state transition drives to the 'error' state and propogates the exception
+        /// </summary>
+        [Fact]
+        public void TestConditionalActionWithErrorAndExplicitErrorState()
+        {
+            _stateMachine.WhenStateIs(State.InitialState).AndEventIs(Event.Event1)
+                .If(() => true)
+                    .TransitionTo(State.State1)
+                    .WithAction(() => throw new ExpectedException(), State.Error);
 
             _stateMachine.Should().AcceptEvent(Event.Event1);
 
@@ -379,7 +436,7 @@ namespace StateMachine.Tests
         {
             var stateMachine = new FiniteStateMachine<int, int>(new[] { 1, 2, 3 }, new[] { 4, 5, 6 }, 1);
 
-            stateMachine.Invoking(sm => sm.IsEventAccepted(9))
+            stateMachine.Invoking(sm => sm.IsEventAccepted(9, out _))
                 .Should().ThrowExactly<ArgumentException>("because 9 is not a valid event");
 
             stateMachine.Invoking(sm => sm.TriggerEvent(9))
@@ -520,7 +577,7 @@ namespace StateMachine.Tests
         {
             Execute.Assertion
                 .BecauseOf(because, becauseArgs)
-                .ForCondition(Subject.IsEventAccepted(eventToAccept).Item1)
+                .ForCondition(Subject.IsEventAccepted(eventToAccept, out _))
                 .FailWith("Expected {context} to accept {0}{reason}, but it does not", eventToAccept);
 
             return new AndConstraint<StateMachineAssertions<TState, TEvent>>(this);
@@ -530,7 +587,7 @@ namespace StateMachine.Tests
         {
             Execute.Assertion
                 .BecauseOf(because, becauseArgs)
-                .ForCondition(!Subject.IsEventAccepted(eventToAccept).Item1)
+                .ForCondition(!Subject.IsEventAccepted(eventToAccept, out _))
                 .FailWith("Expected {context} to not accept {0}{reason}, but it does", eventToAccept);
 
             return new AndConstraint<StateMachineAssertions<TState, TEvent>>(this);
