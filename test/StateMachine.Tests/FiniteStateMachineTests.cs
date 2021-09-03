@@ -388,7 +388,7 @@ namespace StateMachine.Tests
             var transition = _stateMachine
                 .WhenStateIs(State.State2).AndEventIs(Event.Event2)
                 .If(() => true)
-                .TransitionTo(State.State3);
+                    .TransitionTo(State.State3);
 
             transition.ActionErrorState.Should().NotBe(null);
             transition.ActionErrorState.Should().Be(State.State2);
